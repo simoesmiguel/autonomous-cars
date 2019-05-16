@@ -1,12 +1,16 @@
 import arcade
+import random
 
 #SCREEN_WIDTH = 1000
-SIZE= 1000  # Map will be always a square
-SPRITE_SCALING_CAR = 0.4
-C = SIZE / 2
+SIZE= 800  # Map will be always a square
+SPRITE_SCALING_CAR = 0.03
+SPRITE_SCALING_WALL = 0.1
+
+C = SIZE/2
 GREY = (128,128,128)
 WHITE = (255,255,255)
 ROAD_HEIGHT = 200
+MOVEMENT_SPEED = 5
 
 class MyGame(arcade.Window):
     """ Main application class. """
@@ -15,32 +19,76 @@ class MyGame(arcade.Window):
         super().__init__(size,size)
 
         arcade.set_background_color(arcade.color.AMAZON)
+        self.physics_engine = None
+        self.wall_list= arcade.SpriteList()
+        self.coords=[(0,SIZE/4 -50,0),(800,SIZE/4 + 50,180),(550,0,90),(450,800,-90)]
+
 
     def setup(self):
         self.cars_list = arcade.SpriteList()
-        self.car_sprite = arcade.Sprite("car.png",SPRITE_SCALING_CAR)
-        self.car_sprite.center_x = 0
-        self.car_sprite.center_y = C
-        self.cars_list.append(self.car_sprite)
+        self.create_car_sprites()
         # Set up your game here
-        pass
+
+
+        self.draw_walls(0,200,200)
+        self.draw_walls(0,200,100)
+
+        self.draw_walls(600,800,200)
+        self.draw_walls(600,800,100)
+        self.draw_walls(600,800,600)
+        
+        self.draw_walls(600,800,800)
+
+        self.draw_walls(0,200,600)
+
+        self.draw_walls(0,200,800)
+    
+
+
+       # self.physics_engine = arcade.PhysicsEngineSimple(self.cars_list,
+       #                                                  self.wall_list)        
+
+    
+    def draw_walls(self, x_begin, x_max, y_begin):
+        for x in range(x_begin, x_max):
+            wall = arcade.Sprite("black.png", SPRITE_SCALING_WALL)
+            wall.center_x = x
+            wall.center_y = y_begin
+            self.wall_list.append(wall)
+
 
     def on_draw(self):
         """ Render the screen. """
         arcade.start_render()
         self.create_road()
-        self.draw_lanes(2)
+        self.draw_lanes(1)
+        self.wall_list.draw()
         self.cars_list.draw()
         # Your drawing code goes here
 
     def update(self, delta_time):
         """ All the logic to move, and the game logic goes here. """
-        pass
+        #self.physics_engine.update()
+        
+        for car in self.cars_list:
+            car.forward(3)                       
+            
+         
 
     def create_car_sprites(self):
         """Create all cars"""
-        #for i in range()
-        pass
+        for i in range(0,41):
+            self.car_sprite = arcade.Sprite("car.png",SPRITE_SCALING_CAR)
+
+            r = random.randint(0,3)
+
+            self.car_sprite.center_x = self.coords[r][0]
+            self.car_sprite.center_y = self.coords[r][1]
+            self.car_sprite.radians = self.coords[r][2]
+            self.cars_list.append(self.car_sprite)
+
+
+
     def create_road(self):
         arcade.draw_rectangle_filled(C,C,SIZE,ROAD_HEIGHT,GREY)
         arcade.draw_rectangle_filled(C,C,ROAD_HEIGHT,SIZE,GREY)
@@ -74,7 +122,21 @@ class MyGame(arcade.Window):
             aux_acum = aux_acum + (ROAD_HEIGHT/2 )/ num_lanes 
             
         
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.UP:
+            self.car_sprite.change_y = MOVEMENT_SPEED
+        elif key == arcade.key.DOWN:
+            self.car_sprite.change_y = -MOVEMENT_SPEED
+        elif key == arcade.key.LEFT:
+            self.car_sprite.change_x = -MOVEMENT_SPEED
+        elif key == arcade.key.RIGHT:
+            self.car_sprite.change_x = MOVEMENT_SPEED
 
+    def on_key_release(self, key, modifiers):
+        if key == arcade.key.UP or key == arcade.key.DOWN:
+            self.car_sprite.change_y = 0
+        elif key == arcade.key.LEFT or key == arcade.key.RIGHT:
+            self.car_sprite.change_x = 0
 
 def main():
     game = MyGame(SIZE,30)
