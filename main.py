@@ -4,22 +4,25 @@ import math
 
 #SCREEN_WIDTH = 1000
 SIZE= 800  # Map will be always a square
-SPRITE_SCALING_CAR = 0.03
+SPRITE_SCALING_CAR = 0.02
 SPRITE_SCALING_WALL = 0.1
 
 C = SIZE/2
 GREY = (128,128,128)
 WHITE = (255,255,255)
 ROAD_HEIGHT = 200
-MOVEMENT_SPEED = 5
+MOVEMENT_SPEED = 10
 
 
 
 class Car(arcade.Sprite):
     """ Player class """
 
-    def __init__(self, image, scale, goal):
+    def __init__(self, image, scale, path, goal):
         """ Set up the player """
+        self.path= path
+        print("path len: ", len(path))
+        self.array_pos=0
         self.goal= goal
         # Call the parent init
         super().__init__(image, scale)
@@ -38,18 +41,30 @@ class Car(arcade.Sprite):
         # Use math to find our change based on our speed and angle
         self.center_x += -self.speed * math.sin(angle_rad)
         self.center_y += self.speed * math.cos(angle_rad)
+
         '''
-        if(self.goal[0] > self.center_x):
-            self.center_x +=1
 
-        elif(self.goal[0] < self.center_x):
-            self.center_x-=1
+        print("X mine: ",int(self.center_x)," goal: ",int(self.goal[0]))
+        print("Y mine: ",int(self.center_y)," goal: ",int(self.goal[1]))
+        print("array_pos : ", self.array_pos)
+        print("")
 
-        elif(self.goal[1] < self.center_y):
-            self.center_y-=1
 
-        elif(self.goal[1] > self.center_y):
-            self.center_y+=1
+        if(int(self.center_x) == int(self.goal[0]) and int(self.center_y) == int(self.goal[1])):
+            print("Cheguei ao destino")
+
+
+        elif((self.array_pos + MOVEMENT_SPEED) > len(self.path)):
+            #slow down
+            self.center_x = self.path[self.array_pos][0]
+            self.center_y = self.path[self.array_pos][1]
+            self.array_pos +=1
+
+        else:
+            self.center_x = self.path[self.array_pos][0]
+            self.center_y = self.path[self.array_pos][1]
+            self.array_pos +=MOVEMENT_SPEED
+
 
 
 
@@ -65,15 +80,18 @@ class MyGame(arcade.Window):
         self.cars_list = None
 
         self.wall_list = None
+        self.paths=None
 
 
-        self.coords=[(0,SIZE/4 -50,0),(800,SIZE/4 + 50,180),(550,0,90),(450,800,-90)]
+        self.departCoords=[(0,SIZE/2 -50),(800,SIZE/2 + 50),(450,0),(350,800)]
+        self.goalCoords=[(0, SIZE/2+50),(800, SIZE/2 -50),(350,0),(450,800)]
 
 
     def setup(self):
         self.cars_list = arcade.SpriteList()
         self.wall_list= arcade.SpriteList()
-        
+        self.paths=[]
+
         self.create_car_sprites()
         # Set up your game here
 
@@ -121,12 +139,14 @@ class MyGame(arcade.Window):
         #for car in self.cars_list:
         #    car.forward(3)                       
         self.cars_list.update()
-         
+        #hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.coin_list) #list of collisions
+
+
 
     def create_car_sprites(self):
         """Create all cars"""
 
-        for i in range(0,41):
+        for i in range(0,10):
 
             depart = random.randint(0,3)
             goal = random.randint(0,3)
@@ -135,12 +155,83 @@ class MyGame(arcade.Window):
                 depart = random.randint(0,3)
                 goal = random.randint(0,3)
 
-            self.car_sprite = Car("car.png", SPRITE_SCALING_CAR, [self.coords[goal][0],self.coords[goal][1]])
 
-            self.car_sprite.center_x = self.coords[depart][0]    
-            self.car_sprite.center_y = self.coords[depart][1]
-            self.car_sprite.radians = self.coords[depart][2]
+            depart_coords= self.departCoords[depart]
+            goal_coords= self.goalCoords[goal]
+
+            path = self.create_paths(depart_coords, goal_coords)
+
+            self.car_sprite = Car("car.png", SPRITE_SCALING_CAR, path, goal_coords)
+
+            self.car_sprite.center_x = self.departCoords[depart][0]    
+            self.car_sprite.center_y = self.departCoords[depart][1]
             self.cars_list.append(self.car_sprite)
+
+
+    def create_paths(self, depart_coords, goal_coords):
+        print("depart: ",depart_coords, " goal: ",goal_coords)    
+        
+        depart=[0,0]
+        goal=[0,0]
+
+        depart[0] = int(depart_coords[0])
+        depart[1] = int(depart_coords[1])
+        
+        goal[0] = int(goal_coords[0])
+        goal[1] = int(goal_coords[1])
+                
+
+
+        final_path=[]
+
+        if(depart[0]==0):   # when agent departs from (0,150)
+            if(depart[1]==goal[1]): # from (0,150) to (800,150)
+                final_path=[(x,depart[1]) for x in range(depart[0], goal[0])]           
+            else:
+                p1=[(x, depart[1]) for x in range(depart[0], goal[0])]
+                if(depart[1]>goal[1]): #from (0,150) to (450,0)
+                    p2=[(goal[0], y) for y in range(depart[1], goal[1], -1)]
+                else:   #from (0,150) to (550,800)
+                    p2=[(goal[0], y) for y in range(depart[1], goal[1])]        
+                
+                final_path=p1+p2
+
+        elif(depart[0]==450): #when agent departs from (550,0)
+            if(depart[0]==goal[0]): #from (550,0) to (550,800)
+                final_path = [(depart[0],y) for y in range(depart[1],goal[1])]
+            else:
+                p1 = [(depart[0],y) for y in range(depart[1],goal[1])]
+                if(depart[0]>goal[0]): # from (550,0) to (0,250)
+                    p2=[(x, goal[1]) for x in range(depart[0], goal[0], -1)]
+                else: #from (550,0)  to (800,150)
+                    p2 =[(x, goal[1]) for x in range(depart[0], goal[0])]
+
+                final_path =p1+p2                    
+        elif(depart[0] == 800): #when agent departs from (800,250):
+            if(depart[1] == goal[1]):
+                final_path = [(x,depart[1]) for x in range(depart[0], goal[0], -1)]
+            else:
+                p1= [(x,depart[1]) for x in range(depart[0], goal[0], -1)]
+                if(depart[1]>goal[1]): #from (800, 250) to (450,0)
+                    p2 =[(goal[0] , y) for y in range(depart[1], goal[1], -1)]
+                else:   # from (800, 250) to (550,800)
+                    p2 =[(goal[0], y) for y in range(depart[1], goal[1])]
+                final_path =p1+p2
+        else: # when agent departs from (350, 800)
+            if(depart[0]==goal[0]): 
+                final_path =[(depart[0], y) for y in range(depart[1], goal[1], -1)]
+            else:
+                p1=[(depart[0], y) for y in range(depart[1], goal[1], -1)]
+                if(depart[0]>goal[0]): # from (450, 800) to (0, 250)
+                    p2 =[(x, goal[1]) for x in range(depart[0], goal[0], -1)]
+                else:  # from (450, 800) to (800, 150)
+                    p2 =[(x, goal[1]) for x in range(depart[0], goal[0])]                    
+
+                final_path =p1+p2
+
+        final_path.append((goal[0],goal[1]))
+        return final_path
+
 
 
 
