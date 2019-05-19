@@ -18,23 +18,33 @@ class Car(arcade.Sprite):
         self.path = path
         self.array_pos = 0
         self.goal = goal
+        self.other_cars_list = None
         super().__init__(image, scale)
         self.speed = 0
 
+    # def get_distance_between_sprites(self,sprite1: , sprite2: Sprite) -> float:
+    #     distance = math.sqrt((sprite1.center_x - sprite2.center_x) ** 2 + (sprite1.center_y - sprite2.center_y) ** 2)
+    #     return distance
+
     def update(self):
+        distance_to_all_cars = arcade.get_distance_between_sprites(self,self.other_cars_list)
         if(int(self.center_x) == int(self.goal[0]) and int(self.center_y) == int(self.goal[1])):
              self.kill()
 
-        elif((self.array_pos + MOVEMENT_SPEED) > len(self.path)):
-            #slow down
+        elif(len(list(filter(lambda x: x < 75 and x > 0, distance_to_all_cars)))>0):
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
-            self.array_pos +=1
+            self.array_pos += 0
+
+        elif(len(list(filter(lambda x: x < 90 and x > 0, distance_to_all_cars)))>0):
+            self.center_x = self.path[self.array_pos][0]
+            self.center_y = self.path[self.array_pos][1]
+            self.array_pos += MOVEMENT_SPEED/2
 
         else:
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
-            self.array_pos +=MOVEMENT_SPEED
+            self.array_pos += MOVEMENT_SPEED
 
 class MyGame(arcade.Window):
     def __init__(self, size,cars):
@@ -45,6 +55,7 @@ class MyGame(arcade.Window):
         self.cars_list = None
         self.wall_list = None
         self.paths = None
+        self.counter = 0
         self.departCoords = [(0,SIZE/2 -50),(800,SIZE/2 + 50),(450,0),(350,800)]
         self.goalCoords = [(0, SIZE/2+50),(800, SIZE/2 -50),(350,0),(450,800)]
 
@@ -74,35 +85,29 @@ class MyGame(arcade.Window):
             self.wall_list.append(wall)
 
     def on_draw(self):
-        """ Render the screen. """
         arcade.start_render()
         self.create_road()
         self.draw_lanes(1)
         self.wall_list.draw()
         self.cars_list.draw()
-        # Your drawing code goes here
 
     def update(self, delta_time):
-        """ All the logic to move, and the game logic goes here. """
-        #self.physics_engine.update()
-        
-        #for car in self.cars_list:
-        #    car.forward(3)
-        #self.create_car_sprites()
-        xpto = arcade.check_for_collision_with_list(self.car_sprite, self.cars_list)
-        print(xpto)
+        self.counter+=1
+        if (self.counter == 20):
+            self.create_car_sprites() #ACRESCENTAR: só dá spawn se estiver vazia a posição de spawn.
+            self.counter = 0
+        collision_list = arcade.check_for_collision_with_list(self.car_sprite, self.cars_list)
+        for car in self.cars_list:
+            car.other_cars_list = self.cars_list
         self.cars_list.update()
-        #hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.coin_list) #list of collisions
+
 
     def create_car_sprites(self):
-        """Create all cars"""
-
-        for i in range(0,10):
-
-            depart = random.randint(0,3)
+        for i in range(0,3):
+            depart = i
             goal = random.randint(0,3)
 
-            while (depart== goal):
+            while (depart == goal):
                 depart = random.randint(0,3)
                 goal = random.randint(0,3)
 
