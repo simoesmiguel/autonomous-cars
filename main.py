@@ -23,6 +23,7 @@ class Car(arcade.Sprite):
         self.speed = 0
 
     def update(self):
+
         distance_to_all_cars = [arcade.get_distance_between_sprites(self,x) for x in self.other_cars_list]
         if(int(self.center_x) == int(self.goal[0]) and int(self.center_y) == int(self.goal[1])):
              self.kill()
@@ -55,7 +56,6 @@ class MyGame(arcade.Window):
         self.iterations = 3
         self.departCoords = [(0,SIZE/2 -50),(800,SIZE/2 + 50),(450,0),(350,800)]
         self.goalCoords = [(0, SIZE/2+50),(800, SIZE/2 -50),(350,0),(450,800)]
-
 
     def setup(self):
         self.cars_list = arcade.SpriteList()
