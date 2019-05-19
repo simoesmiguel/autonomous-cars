@@ -2,8 +2,7 @@ import arcade
 import random
 import math
 
-#SCREEN_WIDTH = 1000
-SIZE= 800  # Map will be always a square
+SIZE= 800
 SPRITE_SCALING_CAR = 0.02
 SPRITE_SCALING_WALL = 0.1
 
@@ -13,46 +12,18 @@ WHITE = (255,255,255)
 ROAD_HEIGHT = 200
 MOVEMENT_SPEED = 10
 
-
-
 class Car(arcade.Sprite):
-    """ Player class """
 
     def __init__(self, image, scale, path, goal):
-        """ Set up the player """
-        self.path= path
-        print("path len: ", len(path))
-        self.array_pos=0
-        self.goal= goal
-        # Call the parent init
+        self.path = path
+        self.array_pos = 0
+        self.goal = goal
         super().__init__(image, scale)
-
-        #hold the speed.
         self.speed = 0
 
     def update(self):
-        '''
-        # Convert angle in degrees to radians.
-        angle_rad = math.radians(self.angle)
-
-        # Rotate the car
-        self.angle += self.change_angle
-
-        # Use math to find our change based on our speed and angle
-        self.center_x += -self.speed * math.sin(angle_rad)
-        self.center_y += self.speed * math.cos(angle_rad)
-
-        '''
-
-        print("X mine: ",int(self.center_x)," goal: ",int(self.goal[0]))
-        print("Y mine: ",int(self.center_y)," goal: ",int(self.goal[1]))
-        print("array_pos : ", self.array_pos)
-        print("")
-
-
         if(int(self.center_x) == int(self.goal[0]) and int(self.center_y) == int(self.goal[1])):
-            print("Cheguei ao destino")
-
+             self.kill()
 
         elif((self.array_pos + MOVEMENT_SPEED) > len(self.path)):
             #slow down
@@ -65,26 +36,17 @@ class Car(arcade.Sprite):
             self.center_y = self.path[self.array_pos][1]
             self.array_pos +=MOVEMENT_SPEED
 
-
-
-
-
 class MyGame(arcade.Window):
-    """ Main application class. """
-
     def __init__(self, size,cars):
         super().__init__(size,size)
 
         arcade.set_background_color(arcade.color.AMAZON)
         
         self.cars_list = None
-
         self.wall_list = None
-        self.paths=None
-
-
-        self.departCoords=[(0,SIZE/2 -50),(800,SIZE/2 + 50),(450,0),(350,800)]
-        self.goalCoords=[(0, SIZE/2+50),(800, SIZE/2 -50),(350,0),(450,800)]
+        self.paths = None
+        self.departCoords = [(0,SIZE/2 -50),(800,SIZE/2 + 50),(450,0),(350,800)]
+        self.goalCoords = [(0, SIZE/2+50),(800, SIZE/2 -50),(350,0),(450,800)]
 
 
     def setup(self):
@@ -93,26 +55,15 @@ class MyGame(arcade.Window):
         self.paths=[]
 
         self.create_car_sprites()
-        # Set up your game here
-
 
         self.draw_walls(0,200,200)
         self.draw_walls(0,200,100)
-
         self.draw_walls(600,800,200)
         self.draw_walls(600,800,100)
         self.draw_walls(600,800,600)
-        
         self.draw_walls(600,800,800)
-
         self.draw_walls(0,200,600)
-
-        self.draw_walls(0,200,800)
-    
-
-
-        #self.physics_engine = arcade.PhysicsEngineSimple(self.cars_list,
-        #                                                    self.wall_list)        
+        self.draw_walls(0,200,800)       
 
     
     def draw_walls(self, x_begin, x_max, y_begin):
@@ -121,7 +72,6 @@ class MyGame(arcade.Window):
             wall.center_x = x
             wall.center_y = y_begin
             self.wall_list.append(wall)
-
 
     def on_draw(self):
         """ Render the screen. """
@@ -137,11 +87,12 @@ class MyGame(arcade.Window):
         #self.physics_engine.update()
         
         #for car in self.cars_list:
-        #    car.forward(3)                       
+        #    car.forward(3)
+        #self.create_car_sprites()
+        xpto = arcade.check_for_collision_with_list(self.car_sprite, self.cars_list)
+        print(xpto)
         self.cars_list.update()
         #hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.coin_list) #list of collisions
-
-
 
     def create_car_sprites(self):
         """Create all cars"""
@@ -180,8 +131,6 @@ class MyGame(arcade.Window):
         goal[0] = int(goal_coords[0])
         goal[1] = int(goal_coords[1])
                 
-
-
         final_path=[]
 
         if(depart[0]==0):   # when agent departs from (0,150)
@@ -232,9 +181,6 @@ class MyGame(arcade.Window):
         final_path.append((goal[0],goal[1]))
         return final_path
 
-
-
-
     def create_road(self):
         arcade.draw_rectangle_filled(C,C,SIZE,ROAD_HEIGHT,GREY)
         arcade.draw_rectangle_filled(C,C,ROAD_HEIGHT,SIZE,GREY)
@@ -242,7 +188,6 @@ class MyGame(arcade.Window):
         arcade.draw_line(C+ROAD_HEIGHT/2,C,SIZE,C,WHITE,2)#Horizonal right
         arcade.draw_line(C,0,C,C-ROAD_HEIGHT/2,WHITE,2)#vertical bot
         arcade.draw_line(C,C+ROAD_HEIGHT/2,C,SIZE,WHITE,2)#vertical top
-
 
     def draw_lanes(self,num_lanes):
         aux_acum = (ROAD_HEIGHT/2) / num_lanes
@@ -255,7 +200,6 @@ class MyGame(arcade.Window):
             arcade.draw_line(C+ROAD_HEIGHT/2,C,C+ROAD_HEIGHT/2,C+ROAD_HEIGHT/2,WHITE)
             arcade.draw_line(C+ROAD_HEIGHT/2,C-ROAD_HEIGHT/2,C,C-ROAD_HEIGHT/2,WHITE)
             arcade.draw_line(C-ROAD_HEIGHT/2,C+ROAD_HEIGHT/2,C,C+ROAD_HEIGHT/2,WHITE)
-
             #right side H
             arcade.draw_line(C+ROAD_HEIGHT/2,C+aux_acum,SIZE,C+aux_acum,WHITE)
             arcade.draw_line(C+ROAD_HEIGHT/2,C-aux_acum,SIZE,C-aux_acum,WHITE)
@@ -266,29 +210,11 @@ class MyGame(arcade.Window):
             arcade.draw_line(C-aux_acum,SIZE,C-aux_acum,C+ROAD_HEIGHT/2,WHITE)
             arcade.draw_line(C+aux_acum,SIZE,C+aux_acum,C+ROAD_HEIGHT/2,WHITE)
             aux_acum = aux_acum + (ROAD_HEIGHT/2 )/ num_lanes 
-            
-        
-    def on_key_press(self, key, modifiers):
-        if key == arcade.key.UP:
-            self.car_sprite.change_y = MOVEMENT_SPEED
-        elif key == arcade.key.DOWN:
-            self.car_sprite.change_y = -MOVEMENT_SPEED
-        elif key == arcade.key.LEFT:
-            self.car_sprite.change_x = -MOVEMENT_SPEED
-        elif key == arcade.key.RIGHT:
-            self.car_sprite.change_x = MOVEMENT_SPEED
-
-    def on_key_release(self, key, modifiers):
-        if key == arcade.key.UP or key == arcade.key.DOWN:
-            self.car_sprite.change_y = 0
-        elif key == arcade.key.LEFT or key == arcade.key.RIGHT:
-            self.car_sprite.change_x = 0
 
 def main():
     game = MyGame(SIZE,30)
     game.setup()
     arcade.run()
-
 
 if __name__ == "__main__":
     main()
