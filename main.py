@@ -12,6 +12,7 @@ WHITE = (255,255,255)
 ROAD_HEIGHT = 200
 MOVEMENT_SPEED = 10
 AREA = []
+QUEUE = []
 
 class Car(arcade.Sprite):
 
@@ -21,35 +22,36 @@ class Car(arcade.Sprite):
         self.goal = goal
         self.other_cars_list = None
         self.in_intersection = False
+        self.after_intersection = False
         
         super().__init__(image, scale)
 
     def update(self):
+        #print(self.path)
         distance_to_all_cars = [arcade.get_distance_between_sprites(self,x) for x in self.other_cars_list]
         if(int(self.center_x) == int(self.goal[0]) and int(self.center_y) == int(self.goal[1])):
              self.kill()
 
-        elif(len(list(filter(lambda y : y == True,[x.in_intersection for x in self.other_cars_list])))>0):
+        elif(len(list(filter(lambda y : y == True,[x.in_intersection for x in self.other_cars_list])))>0 and (self.center_x,self.center_y) in AREA and self.after_intersection==False):
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += 0
 
-
-        elif(300<self.center_x and self.center_x<500 and 300<self.center_y and self.center_y<500 and self.in_intersection==False):
+        elif(250<self.center_x and self.center_x<550 and 250<self.center_y and self.center_y<550 and self.in_intersection==False):
             self.in_intersection = True
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
-            self.array_pos += MOVEMENT_SPEED        
+            self.array_pos += MOVEMENT_SPEED     
 
         elif(len(list(filter(lambda x: x < 60 and x > 0, distance_to_all_cars)))>0):
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += 0
 
-        # elif(len(list(filter(lambda x: x < 90 and x > 0, distance_to_all_cars)))>0):
-        #     self.center_x = self.path[self.array_pos][0]
-        #     self.center_y = self.path[self.array_pos][1]
-        #     self.array_pos += MOVEMENT_SPEED//2
+        elif(len(list(filter(lambda x: x < 90 and x > 0, distance_to_all_cars)))>0 and self.in_intersection==False):
+            self.center_x = self.path[self.array_pos][0]
+            self.center_y = self.path[self.array_pos][1]
+            self.array_pos += MOVEMENT_SPEED//2
 
         else:
             self.center_x = self.path[self.array_pos][0]
@@ -57,6 +59,7 @@ class Car(arcade.Sprite):
             self.array_pos += MOVEMENT_SPEED
             if((self.center_x,self.center_y) in AREA and self.in_intersection==True):
                 self.in_intersection=False
+                self.after_intersection=True
 
 class MyGame(arcade.Window):
     def __init__(self, size,cars):
