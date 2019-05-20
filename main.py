@@ -11,6 +11,7 @@ GREY = (128,128,128)
 WHITE = (255,255,255)
 ROAD_HEIGHT = 200
 MOVEMENT_SPEED = 10
+AREA = []
 
 class Car(arcade.Sprite):
 
@@ -19,29 +20,43 @@ class Car(arcade.Sprite):
         self.array_pos = 0
         self.goal = goal
         self.other_cars_list = None
+        self.in_intersection = False
+        
         super().__init__(image, scale)
-        self.speed = 0
 
     def update(self):
-
         distance_to_all_cars = [arcade.get_distance_between_sprites(self,x) for x in self.other_cars_list]
         if(int(self.center_x) == int(self.goal[0]) and int(self.center_y) == int(self.goal[1])):
              self.kill()
 
-        elif(len(list(filter(lambda x: x < 75 and x > 0, distance_to_all_cars)))>0):
+        elif(len(list(filter(lambda y : y == True,[x.in_intersection for x in self.other_cars_list])))>0):
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += 0
 
-        elif(len(list(filter(lambda x: x < 90 and x > 0, distance_to_all_cars)))>0):
+
+        elif(300<self.center_x and self.center_x<500 and 300<self.center_y and self.center_y<500 and self.in_intersection==False):
+            self.in_intersection = True
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
-            self.array_pos += MOVEMENT_SPEED//2
+            self.array_pos += MOVEMENT_SPEED        
+
+        elif(len(list(filter(lambda x: x < 60 and x > 0, distance_to_all_cars)))>0 or self.stop==True):
+            self.center_x = self.path[self.array_pos][0]
+            self.center_y = self.path[self.array_pos][1]
+            self.array_pos += 0
+
+        # elif(len(list(filter(lambda x: x < 90 and x > 0, distance_to_all_cars)))>0):
+        #     self.center_x = self.path[self.array_pos][0]
+        #     self.center_y = self.path[self.array_pos][1]
+        #     self.array_pos += MOVEMENT_SPEED//2
 
         else:
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += MOVEMENT_SPEED
+            if((self.center_x,self.center_y) in AREA and self.in_intersection==True):
+                self.in_intersection=False
 
 class MyGame(arcade.Window):
     def __init__(self, size,cars):
@@ -61,6 +76,7 @@ class MyGame(arcade.Window):
         self.cars_list = arcade.SpriteList()
         self.wall_list= arcade.SpriteList()
         self.paths=[]
+        self.create_sensor_area()
 
         self.create_car_sprites()
 
@@ -98,7 +114,7 @@ class MyGame(arcade.Window):
         elif not self.cars_list:
             arcade.close_window
         for car in self.cars_list:
-            car.other_cars_list = self.cars_list
+            car.other_cars_list = list((filter(lambda x : x != car,self.cars_list)))
         self.cars_list.update()
 
 
@@ -127,9 +143,7 @@ class MyGame(arcade.Window):
                 self.cars_list.append(self.car_sprite)
 
 
-    def create_paths(self, depart_coords, goal_coords):
-        print("depart: ",depart_coords, " goal: ",goal_coords)    
-        
+    def create_paths(self, depart_coords, goal_coords):        
         depart=[0,0]
         goal=[0,0]
 
@@ -142,7 +156,7 @@ class MyGame(arcade.Window):
         final_path=[]
 
         if(depart[0]==0):   # when agent departs from (0,150)
-            if(depart[1]==goal[1]): # from (0,150) to (800,150)
+            if(depart[1]==goal[1]): # from (0,350) to (800,350)
                 final_path=[(x,depart[1]) for x in range(depart[0], goal[0])]           
             else:
                 p1=[(x, depart[1]) for x in range(depart[0], goal[0])]
@@ -188,6 +202,22 @@ class MyGame(arcade.Window):
 
         final_path.append((goal[0],goal[1]))
         return final_path
+    def create_sensor_area(self):
+        area = []
+        global AREA
+        for i in range(240,301):
+            for j in range(300,500):
+                area.append((i,j))
+        for i in range(300,500):
+            for j in range(240,300):
+                area.append((i,j))
+        for i in range(500,560):
+            for j in range(300,500):
+                area.append((i,j))
+        for i in range(300,500):
+            for j in range(500,560):
+                area.append((i,j)) 
+        AREA = area
 
     def create_road(self):
         arcade.draw_rectangle_filled(C,C,SIZE,ROAD_HEIGHT,GREY)
