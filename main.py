@@ -41,7 +41,7 @@ class Car(arcade.Sprite):
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += MOVEMENT_SPEED        
 
-        elif(len(list(filter(lambda x: x < 60 and x > 0, distance_to_all_cars)))>0 or self.stop==True):
+        elif(len(list(filter(lambda x: x < 60 and x > 0, distance_to_all_cars)))>0):
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += 0
