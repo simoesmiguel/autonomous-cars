@@ -32,32 +32,44 @@ class Car(arcade.Sprite):
         if(int(self.center_x) == int(self.goal[0]) and int(self.center_y) == int(self.goal[1])):
              self.kill()
 
+        #caso de alguém já controlar a intersecao
         elif(len(list(filter(lambda y : y == True,[x.in_intersection for x in self.other_cars_list])))>0 and (self.center_x,self.center_y) in AREA and self.after_intersection==False):
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += 0
 
+        #caso da tomada de controlo da intersecao
         elif(250<self.center_x and self.center_x<550 and 250<self.center_y and self.center_y<550 and self.in_intersection==False):
             self.in_intersection = True
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
-            self.array_pos += MOVEMENT_SPEED     
+            self.array_pos += MOVEMENT_SPEED 
+            
+        # elif(all([(x.center_x,x.center_y) not in self.path for x in self.other_cars_list]) and self in QUEUE):
+        #     self.center_x = self.path[self.array_pos][0]
+        #     self.center_y = self.path[self.array_pos][1]
+        #     self.array_pos += MOVEMENT_SPEED
+        #     QUEUE.append(self)
 
+        #caso da distancia de travagem
         elif(len(list(filter(lambda x: x < 60 and x > 0, distance_to_all_cars)))>0):
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += 0
+            QUEUE.append(self)
 
+        #caso da distancia de abrandamento
         elif(len(list(filter(lambda x: x < 90 and x > 0, distance_to_all_cars)))>0 and self.in_intersection==False):
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += MOVEMENT_SPEED//2
 
+        #caso de circulacao normal
         else:
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += MOVEMENT_SPEED
-            if((self.center_x,self.center_y) in AREA and self.in_intersection==True):
+            if((self.center_x,self.center_y) in AREA and self.in_intersection==True and (250>self.center_x or self.center_x>550 or 250>self.center_y or self.center_y>550)):
                 self.in_intersection=False
                 self.after_intersection=True
 
@@ -208,17 +220,17 @@ class MyGame(arcade.Window):
     def create_sensor_area(self):
         area = []
         global AREA
-        for i in range(240,301):
+        for i in range(200,350):
             for j in range(300,500):
                 area.append((i,j))
         for i in range(300,500):
-            for j in range(240,300):
+            for j in range(450,600):
                 area.append((i,j))
-        for i in range(500,560):
+        for i in range(450,600):
             for j in range(300,500):
                 area.append((i,j))
         for i in range(300,500):
-            for j in range(500,560):
+            for j in range(200,350):
                 area.append((i,j)) 
         AREA = area
 
