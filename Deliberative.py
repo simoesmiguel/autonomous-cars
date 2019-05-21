@@ -10,7 +10,7 @@ C = SIZE/2
 GREY = (128,128,128)
 WHITE = (255,255,255)
 ROAD_HEIGHT = 200
-MOVEMENT_SPEED = 15
+MOVEMENT_SPEED = 25
 AREA = []
 QUEUE = []
 
@@ -30,10 +30,10 @@ class Car(arcade.Sprite):
     def update(self):
         distance_to_all_cars = [arcade.get_distance_between_sprites(self,x) for x in self.other_cars_list]
         #Quando passaste o ponto de colisão
-        if(self.entrei==True and (self.center_x,self.center_y) not in AREA):
-            print("ooooooooo")
+        if(self.entrei==True and (self.center_x,self.center_y) in self.collision_point.keys()):
+            print("vou libertar os gajos")
             carros_list = self.collision_point[(self.center_x,self.center_y)]
-            for carrinho in other_cars_list:
+            for carrinho in carros_list:
                 carrinho.message=None
             self.entrei = False
             self.collision_point.pop((self.center_x,self.center_y))
@@ -68,17 +68,24 @@ class Car(arcade.Sprite):
         #IN AREA
         elif((self.center_x,self.center_y) in AREA and self.entrei==False):
             cars_inside = [x for x in self.other_cars_list if (x.center_x,x.center_y) in AREA]
+            counter=0
             for car in cars_inside:
-                common = [value for value in self.path[self.array_pos:self.array_pos+500] if value in car.path[car.array_pos:car.array_pos+300]]
+                common = [value for value in self.path[self.array_pos:self.array_pos+300] if value in car.path[car.array_pos:car.array_pos+300]]
+
                 if(len(common)>0):
-                    if (common[0] in self.collision_point.keys()):
-                        v=self.collision_point[common[0]]
-                        v.append(car)
-                        self.collision_point[common[0]] = v  
-                    else:
-                        self.collision_point[common[0]] = [car] 
-                    car.message = 0
-                    self.entrei = True
+                    if( len(self.path[self.array_pos:]) < len(car.path[car.array_pos:])): # se eu estiver mais perto do destino, bloqueio o outro 
+                        counter+=1
+                        if (common[0] in self.collision_point.keys()):
+                            cars_list=self.collision_point[common[0]]
+                            cars_list.append(car)
+                            self.collision_point[common[0]] = cars_list
+                        else:
+                            self.collision_point[common[0]] = [car] 
+                        car.message = 0
+            
+                        print("Eu ",(self.center_x,self.center_y ),"vou bloquear ",counter, " gajos")
+
+            self.entrei = True
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += MOVEMENT_SPEED
@@ -99,7 +106,7 @@ class MyGame(arcade.Window):
         self.wall_list = None
         self.paths = None
         self.counter = 0
-        self.iterations = 0
+        self.iterations = 8
         self.departCoords = [(0,SIZE/2 -50),(800,SIZE/2 + 50),(450,0),(350,800)]
         self.goalCoords = [(0, SIZE/2+50),(800, SIZE/2 -50),(350,0),(450,800)]
 
