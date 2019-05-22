@@ -5,7 +5,8 @@ multiagent system, where agents are autonomous cars that must
 cooperate in order to manage the traffic in road intersections.
 
 
-To run main.py it's necessary to install **arcade** library:
+To run Reactive or Deliberative agents just choose the according ".py" file.
+It's necessary to install **arcade** library before anything:
 
 http://arcade.academy/installation_linux.html
 
