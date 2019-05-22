@@ -1,19 +1,20 @@
 import arcade
 import random
 import math
+import time
+from statistics import median
 
 SIZE= 800
 SPRITE_SCALING_CAR = 0.03
 SPRITE_SCALING_WALL = 0.1
 
+TIMES=[]
 C = SIZE/2
 GREY = (128,128,128)
 WHITE = (255,255,255)
 ROAD_HEIGHT = 200
 MOVEMENT_SPEED = 15
 AREA = []
-QUEUE = []
-#NUMBER_OF_CARS_IN_INTERSECTION=0
 
 class Car(arcade.Sprite):
 
@@ -28,28 +29,24 @@ class Car(arcade.Sprite):
         self.number_of_paused =0
         self.number_of_blocks=0
         self.car_who_blocked_me=None
-        
+        self.start = time.time()
         super().__init__(image, scale)
 
     def update(self):
-        #global NUMBER_OF_CARS_IN_INTERSECTION
-
         distance_to_all_cars = [arcade.get_distance_between_sprites(self,x) for x in self.other_cars_list]
+        
         #Quando passaste o ponto de colisão
-        #if(self.entrei==True and (self.center_x,self.center_y) in self.collision_point.keys()):
         if(self.entrei==True and (self.center_x,self.center_y) not in AREA):
-            #NUMBER_OF_CARS_IN_INTERSECTION -=1
             for pos in self.collision_point:
                 for carrinho in self.collision_point[pos]:    
                     carrinho.message=None
-
             self.entrei = False
-          #  print("iff 1")
-
 
         #kill
         if(int(self.center_x) == int(self.goal[0]) and int(self.center_y) == int(self.goal[1])):
             #print("iff 2")
+            end = time.time()
+            TIMES.append(end - self.start)
             self.kill()
      
         #Slow down
@@ -57,31 +54,22 @@ class Car(arcade.Sprite):
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos +=1 
-           # print("ifff 3")
 
-
-        #MOVE AFTER STOP
+        #move after stop
         elif(len(list(filter(lambda y : y == True,[(x.center_x, x.center_y) in self.path[self.array_pos:self.array_pos+100] for x in self.other_cars_list])))==0):
-            #print("ifff 4")
-            #if(NUMBER_OF_CARS_IN_INTERSECTION<3):
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += MOVEMENT_SPEED
 
-        #caso da distancia de travagem
+        #braking distance
         elif(len(list(filter(lambda x: x < 20 and x>0, distance_to_all_cars)))>0):
             #print("ifff 5")
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += 0
 
-
-        #SE ALGUÉM JÁ deu set na mensagem
+        #if someone has locked you
         elif(self.message != None):
-            #print("ifff 6")
-            #print("car who blocked me : ", (self.car_who_blocked_me.center_x, self.car_who_blocked_me.center_y))
-            #print("car who blocked me (MESSAGE): ", self.car_who_blocked_me.message)
-            #print("# blocks: ",self.number_of_blocks)
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += 0
@@ -95,41 +83,24 @@ class Car(arcade.Sprite):
             elif(self.car_who_blocked_me.message != None): 
                 self.message=None
 
-            # o carro que o bloqueou nao esta bloqueado, mas por alguma razao tambem nao anda, por isso obrigar o outro gajo a andar
-            elif(self.car_who_blocked_me.message == None): # obrigar o gajo que o bloqueou a andar
+            # o carro que o bloqueou nao esta bloqueado, mas por alguma razao tambem nao anda, por isso obrigar o outro a andar
+            elif(self.car_who_blocked_me.message == None): # obrigar o que o bloqueou a andar
                 self.car_who_blocked_me.center_x = self.car_who_blocked_me.path[self.car_who_blocked_me.array_pos][0]
                 self.car_who_blocked_me.center_y = self.car_who_blocked_me.path[self.car_who_blocked_me.array_pos][1]
-                self.car_who_blocked_me.array_pos+=MOVEMENT_SPEED
+                self.car_who_blocked_me.array_pos+=MOVEMENT_SPEED   
 
-       
-
-        #IN AREA
+        #inside intersection
         elif((self.center_x,self.center_y) in AREA and self.entrei==False):
-            #print("# cars: ",NUMBER_OF_CARS_IN_INTERSECTION)
-
-            '''
-            if(NUMBER_OF_CARS_IN_INTERSECTION>3):
-                self.center_x = self.path[self.array_pos][0]
-                self.center_y = self.path[self.array_pos][1]
-                self.array_pos += 0
-            else:
-            '''
-            #NUMBER_OF_CARS_IN_INTERSECTION +=1
             cars_inside = [x for x in self.other_cars_list if (x.center_x,x.center_y) in AREA]
             counter=0
             for car in cars_inside:
-                #if (car.message == None): # so bloqueia carros que ainda nao estao bloqueados
-
                 common = [value for value in self.path[self.array_pos:self.array_pos+300] if value in car.path[car.array_pos:car.array_pos+300]]
 
                 if(len(common)>0):
                     mine_n_iterations = abs(common[0][0] - self.center_x) + abs(common[0][1] - self.center_y)
                     other_n_iterations = abs(common[0][0] - car.center_x) + abs(common[0][1] - car.center_y)
 
-                    if(mine_n_iterations < other_n_iterations): # a mesma distancia do ponto de colisao
-                    #if( len(self.path[self.array_pos:]) < len(car.path[car.array_pos:])): # so bloqueia aqueles que estao mais longe do destino do que ele proprio
-                        #print("mine: ",mine_n_iterations)
-                        #print("other: ",other_n_iterations)
+                    if(mine_n_iterations < other_n_iterations): # a minha distancia é menor que a do outro
 
                         counter+=1
                         if (common[0] in self.collision_point.keys()):
@@ -140,17 +111,14 @@ class Car(arcade.Sprite):
                             self.collision_point[common[0]] = [car]
                         car.message = 0
                         car.car_who_blocked_me = self
-    
-           # if(counter!=0):
-                #print("bloacked : ",counter)            
+               
             self.entrei = True
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += MOVEMENT_SPEED
 
-        #caso de circulacao normal
+        #normal circulation
         else:
-            #print("iff 7")
             self.center_x = self.path[self.array_pos][0]
             self.center_y = self.path[self.array_pos][1]
             self.array_pos += MOVEMENT_SPEED
@@ -158,14 +126,12 @@ class Car(arcade.Sprite):
 class MyGame(arcade.Window):
     def __init__(self, size,cars):
         super().__init__(size,size)
-
         arcade.set_background_color(arcade.color.AMAZON)
-        
         self.cars_list = None
         self.wall_list = None
         self.paths = None
         self.counter = 0
-        self.iterations = 8
+        self.iterations = 3
         self.departCoords = [(0,SIZE/2 -50),(800,SIZE/2 + 50),(450,0),(350,800)]
         self.goalCoords = [(0, SIZE/2+50),(800, SIZE/2 -50),(350,0),(450,800)]
 
@@ -174,9 +140,7 @@ class MyGame(arcade.Window):
         self.wall_list= arcade.SpriteList()
         self.paths=[]
         self.create_sensor_area()
-
         self.create_car_sprites()
-
         self.draw_walls(0,200,200)
         self.draw_walls(0,200,100)
         self.draw_walls(600,800,200)
@@ -185,7 +149,6 @@ class MyGame(arcade.Window):
         self.draw_walls(600,800,800)
         self.draw_walls(0,200,600)
         self.draw_walls(0,200,800)       
-
     
     def draw_walls(self, x_begin, x_max, y_begin):
         for x in range(x_begin, x_max):
@@ -214,7 +177,6 @@ class MyGame(arcade.Window):
             car.other_cars_list = list((filter(lambda x : x != car,self.cars_list)))
 
         self.cars_list.update()
-
 
     def create_car_sprites(self):
         for i in range(0,4):
@@ -245,7 +207,6 @@ class MyGame(arcade.Window):
 
             if not(len(list(filter(lambda x: x < 70, distance_to_all_cars)))>0):
                 self.cars_list.append(self.car_sprite)
-
 
     def create_paths(self, depart_coords, goal_coords):        
         depart=[0,0]
@@ -306,6 +267,7 @@ class MyGame(arcade.Window):
 
         final_path.append((goal[0],goal[1]))
         return final_path
+
     def create_sensor_area(self):
         area = []
         global AREA
@@ -350,4 +312,8 @@ def main():
     arcade.run()
 
 if __name__ == "__main__":
+    start = time.time()
     main()
+    end = time.time()
+    print("TOTAL TIME: ",end - start)
+    print(median(TIMES))
